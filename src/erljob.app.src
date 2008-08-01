@@ -1,0 +1,16 @@
+{application, erljob, [
+  {description, "erljob - Job Scheduler."},
+  {vsn, "%VSN%"},
+  {modules, [
+    erljob, erljob_app, erljob_sup,
+    erljob_db,
+    erljob_job_sup, erljob_job
+  ]},
+  {registered, [
+    erljob_sup, erljob_db, erljob_job_sup
+  ]},
+  {applications, [kernel, stdlib]},
+  {mod, {erljob_app, []}},
+  {start_phases, []},
+  {env, []}
+]}.
