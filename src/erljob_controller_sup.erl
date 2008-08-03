@@ -16,10 +16,10 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(erljob_job_sup).
+-module(erljob_controller_sup).
 -behaviour(supervisor).
 
--export([start_link/0, start_child/3]).
+-export([start_link/0, start_child/4]).
 -export([init/1]).
 
 -define(SHUTDOWN_WAITING_TIME, 2000).

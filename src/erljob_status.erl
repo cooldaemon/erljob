@@ -20,6 +20,7 @@
 -behaviour(gen_server).
 
 -export([start_link/0, stop/0]).
+-export([add/1, delete/1, dump/0, lookup/1]).
 -export([
   init/1,
   handle_call/3, handle_cast/2, handle_info/2,
@@ -34,12 +35,38 @@ start_link() ->
 stop() ->
   gen_server:call(?MODULE, stop).
 
+add(Arg) ->
+  gen_server:cast(?MODULE, {add, Arg}).
+
+delete(Name) ->
+  gen_server:cast(?MODULE, {delete, Name}).
+
+dump() ->
+  gen_server:call(?MODULE, dump).
+
+lookup(Name) ->
+  gen_server:call(?MODULE, {lookup, Name}).
+
 %% @spec init(_Args:[]) -> {ok, []}
 init(_Args) ->
   process_flag(trap_exit, true),
-  {ok, []}.
+  {ok, {ets:new(erljob_status, [bag, private])}}.
 
 %% @type form() = {pid(), Tag}.
+
+handle_call(dump, _From, {Ets}) ->
+  {
+    reply,
+    ets:match(Ets, {'$1', {'$2', '$3', '$4', '$5', '$6'}}),
+    {Ets} 
+  };
+
+handle_call({lookup, Name}, _From, {Ets}) ->
+  {
+    reply,
+    ets:match(Ets, {'$1', {Name, '$3', '$4', '$5', '$6'}}),
+    {Ets} 
+  };
 
 %% @doc stop server.
 %% @spec handle_call(stop, _From:from(), State:term()) ->
@@ -51,6 +78,14 @@ handle_call(stop, _From, State) ->
 %%  {reply, ok, State:term()}.
 handle_call(_Message, _From, State) ->
   {reply, ok, State}.
+
+handle_cast({add, {Pid, Name, Job, Arg, Interval, Count}}, {Ets}) ->
+  ets:insert(Ets, {Pid, {Name, Job, Arg, Interval, Count}}),
+  {noreply, {Ets}};
+
+handle_cast({delete, Name}, {Ets}) ->
+  ets:match_detele(Ets, {'$1', {Name, '_', '_', '_', '_'}}),
+  {noreply, {Ets}};
 
 %% @spec handle_cast(_Message:term(), _State:term()) ->
 %%  {noreply, State:term()}

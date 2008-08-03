@@ -5,7 +5,7 @@
 %%  Here's a quick example illustrating how to use erljob: 
 %%  ```
 %%    erljob:start(),
-%%    erljob:add_job(hi, fun () -> io:fwrite("Hi!") end, 10000, 10),
+%%    erljob:add_job(hi, fun ([]) -> io:fwrite("Hi!") end, [], 10000, 10),
 %%    erljob:stop()
 %%  '''
 
@@ -27,9 +27,9 @@
 
 -export([start/0, stop/0]). 
 -export([
-  add_jobs/2, add_job/4, delete_job/1,
+  add_jobs/2, add_job/5, delete_job/1,
   restart_job/1, suspend_job/1,
-  lookup/0, lookup/1
+  dump/0, lookup/1
 ]). 
 
 %% @equiv application:start(erljob, permanent)
@@ -46,7 +46,7 @@ add_jobs(Name, [{Job, Arg, Interval, Count} | Jobs]) ->
 
 add_job(Name, Job, Arg, Interval, Count) ->
   {ok, Pid} = erljob_controller_sup:start_child(Job, Arg, Interval, Count),
-  erljob_status:add(Pid, Name, Job, Arg, Interval, Count),
+  erljob_status:add({Pid, Name, Job, Arg, Interval, Count}),
   ok.
 
 delete_job(Name) ->
@@ -55,7 +55,7 @@ delete_job(Name) ->
     fun erljob_status:delete/1
   ]).
 
-start_job(Name) ->
+restart_job(Name) ->
   modify_job(Name, [fun erljob_controller:restart/1]).
 
 suspend_job(Name) ->
@@ -73,7 +73,7 @@ modify_jobs(
   modify_jobs(Jobs, Actions).
 
 %% @equiv erljob_status:lookup()
-lookup() -> erljob_status:lookup().
+dump() -> erljob_status:dump().
 
 %% @equiv erljob_status:lookup(Name)
 lookup(Name) -> erljob_status:lookup(Name).

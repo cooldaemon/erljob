@@ -30,7 +30,7 @@ init(Parent, Arg) ->
   loop(Arg, run).
 
 loop({_Job, _JobArg, _Interval, 0}, _State) -> ok;
-loop(Arg, State) ->
+loop({_Job, _JobArg, Interval, _State}=Arg, State) ->
   receive
     restart -> loop(Arg, start);
     suspend -> loop(Arg, suspend);
