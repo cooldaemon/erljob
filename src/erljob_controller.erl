@@ -16,38 +16,37 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(erljob_job).
+-module(erljob_controller).
 
 -export([start_link/1]).
 -export([init/2]).
--export([start/1, stop/1, delete/1]).
+-export([restart/1, suspend/1, finish/1]).
 
 start_link(Arg) ->
   proc_lib:start_link(?MODULE, init, [self(), Arg]).
 
-init(Parent, {Function, FunctionArg, Interval, Count}) ->
+init(Parent, Arg) ->
   proc_lib:init_ack(Parent, {ok, self()}),
-  loop(Function, FunctionArg, Interval, Count, start).
+  loop(Arg, run).
 
-loop(_Function, _FunctionArg, _Interval, 0, _State) -> ok;
-loop(Function, FunctionArg, Interval, Count, State) ->
+loop({_Job, _JobArg, _Interval, 0}, _State) -> ok;
+loop(Arg, State) ->
   receive
-    start ->
-      loop(Function, FunctionArg, Interval, Count, start);
-    stop ->
-      loop(Function, FunctionArg, Interval, Count, stop);
-    delete ->
-      ok
+    restart -> loop(Arg, start);
+    suspend -> loop(Arg, suspend);
+    finish  -> ok
   after Interval ->
-    case State of
-      start ->
-        loop(Function, Function(FunctionArg), Interval, Count - 1, State);
-      _State -> 
-        loop(Function, FunctionArg, Interval, Count, State)
-    end
+    run_job(Arg, State)
   end.
 
-start(Pid)  -> Pid ! start.
-stop(Pid)   -> Pid ! stop.
-delete(Pid) -> Pid ! delete.
+run_job({{Module, Function}=Job, JobArg, Interval, Count}, run) ->
+  loop({Job, Module:Function(JobArg), Interval, Count - 1}, run);
+run_job({Job, JobArg, Interval, Count}, run) ->
+  loop({Job, Job(JobArg), Interval, Count - 1}, run);
+run_job(Arg, State) ->
+  loop(Arg, State).
+
+restart(Pid) -> Pid ! restart.
+suspend(Pid) -> Pid ! stop.
+finish(Pid)  -> Pid ! finish.
 

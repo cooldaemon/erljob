@@ -28,7 +28,7 @@
 -export([start/0, stop/0]). 
 -export([
   add_jobs/2, add_job/4, delete_job/1,
-  start_job/1, stop_job/1,
+  restart_job/1, suspend_job/1,
   lookup/0, lookup/1
 ]). 
 
@@ -40,38 +40,41 @@ start() ->
 stop() -> application:stop(erljob).
 
 add_jobs(_Name, []) -> ok;
-add_jobs(Name, [{Function, Interval, Count} | Jobs]) ->
-  add_job(Name, Function, Interval, Count),
+add_jobs(Name, [{Job, Arg, Interval, Count} | Jobs]) ->
+  add_job(Name, Job, Arg, Interval, Count),
   add_jobs(Name, Jobs).
 
-add_job(Name, Function, Interval, Count) ->
-  {ok, Pid} = erljob_job_sup:start_child(Function, Interval, Count),
-  erljob_db:add(Pid, Name, Function, Interval, Count),
+add_job(Name, Job, Arg, Interval, Count) ->
+  {ok, Pid} = erljob_controller_sup:start_child(Job, Arg, Interval, Count),
+  erljob_status:add(Pid, Name, Job, Arg, Interval, Count),
   ok.
 
 delete_job(Name) ->
-  modify_job(Name, [fun erljob_job:delete/1, fun erljob_db:delete/1]).
+  modify_job(Name, [
+    fun erljob_controller:finish/1,
+    fun erljob_status:delete/1
+  ]).
 
 start_job(Name) ->
-  modify_job(Name, [fun erljob_job:start/1]).
+  modify_job(Name, [fun erljob_controller:restart/1]).
 
-stop_job(Name) ->
-  modify_job(Name, [fun erljob_job:stop/1]).
+suspend_job(Name) ->
+  modify_job(Name, [fun erljob_controller:suspend/1]).
 
 modify_job(Name, Actions) ->
-  modify_jobs(erljob_db:lookup(Name), Actions).
+  modify_jobs(erljob_status:lookup(Name), Actions).
 
 modify_jobs([], _Action) -> ok;
 modify_jobs(
-  [{Pid, _Name, _Function, _Interval, _Count, _State} | Jobs],
+  [{Pid, _Name, _Job, _Arg, _Interval, _Count, _State} | Jobs],
   Actions
 ) ->
   lists:foreach(fun (Action) -> Action(Pid) end, Actions),
   modify_jobs(Jobs, Actions).
 
-%% @equiv erljob_db:lookup()
-lookup() -> erljob_db:lookup().
+%% @equiv erljob_status:lookup()
+lookup() -> erljob_status:lookup().
 
-%% @equiv erljob_db:lookup(Name)
-lookup(Name) -> erljob_db:lookup(Name).
+%% @equiv erljob_status:lookup(Name)
+lookup(Name) -> erljob_status:lookup(Name).
 

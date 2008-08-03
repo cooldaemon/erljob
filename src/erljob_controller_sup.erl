@@ -1,6 +1,6 @@
 %% @author Masahito Ikuta <cooldaemon@gmail.com> [http://d.hatena.ne.jp/cooldaemon/]
 %% @copyright Masahito Ikuta 2008
-%% @doc A supervisor for the erljob_job.
+%% @doc A supervisor for the erljob_controller.
 
 %% Copyright 2008 Masahito Ikuta
 %%
@@ -28,16 +28,16 @@
 start_link() -> sup_utils:start_link(?MODULE, []).
 
 %% @equiv supervisor:start_child(
-%%  ?MODULE, [Function:term(), Interval:integer(), Count:integer()])
-start_child(Function, Interval, Count) ->
-  supervisor:start_child(?MODULE, [Function, Interval, Count]).
+%%  ?MODULE, [Job:term(), Arg:term(), Interval:integer(), Count:integer()])
+start_child(Job, Arg, Interval, Count) ->
+  supervisor:start_child(?MODULE, [{Job, Arg, Interval, Count}]).
 
 %% @doc Callback for supervisor.
 %% @spec init(_Args:[]) -> Spec:term()
 init(_Args) ->
   sup_utils:spec(simple_one_for_one, [{
     undefined,
-    {erljob_job, start_link, []},
+    {erljob_controller, start_link, []},
     temporary,
     ?SHUTDOWN_WAITING_TIME,
     worker,

@@ -32,7 +32,7 @@ stop() -> sup_utils:stop(?MODULE).
 %% @spec init(_Args:[]) -> Spec:term()
 init(_Args) ->
   sup_utils:spec(one_for_one, [
-    sup_utils:worker_spec(erljob_db, []),
-    sup_utils:supervisor_spec(erljob_job_sup, [])
+    sup_utils:worker_spec(erljob_status, []),
+    sup_utils:supervisor_spec(erljob_controller_sup, [])
   ]).
 
