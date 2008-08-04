@@ -5,7 +5,7 @@
 %%  Here's a quick example illustrating how to use erljob: 
 %%  ```
 %%    erljob:start(),
-%%    erljob:add_job(hi, fun ([]) -> io:fwrite("Hi!") end, [], 10000, 10),
+%%    erljob:add_job(hi, fun (_X) -> io:fwrite("Hi!"), ok end, ok, 1000, 2),
 %%    erljob:stop()
 %%  '''
 
@@ -26,11 +26,7 @@
 -module(erljob).
 
 -export([start/0, stop/0]). 
--export([
-  add_jobs/2, add_job/5, delete_job/1,
-  restart_job/1, suspend_job/1,
-  dump/0, lookup/1
-]). 
+-export([add_job/5, delete_job/1, restart_job/1, suspend_job/1]). 
 
 %% @equiv application:start(erljob, permanent)
 start() ->
@@ -39,42 +35,23 @@ start() ->
 %% @equiv application:stop(erljob)
 stop() -> application:stop(erljob).
 
-add_jobs(_Name, []) -> ok;
-add_jobs(Name, [{Job, Arg, Interval, Count} | Jobs]) ->
-  add_job(Name, Job, Arg, Interval, Count),
-  add_jobs(Name, Jobs).
+add_job(Name, Job, State, Interval, Count) ->
+  add_job(erljob_status:create(Name), Name, Job, State, Interval, Count).
 
-add_job(Name, Job, Arg, Interval, Count) ->
-  {ok, Pid} = erljob_controller_sup:start_child(Job, Arg, Interval, Count),
-  erljob_status:add({Pid, Name, Job, Arg, Interval, Count}),
+add_job(exist, _Name, _Job, _State, _Interval, _Count) -> exist;
+add_job(ok, Name, Job, State, Interval, Count) ->
+  {ok, Pid} = erljob_controller_sup_sup:start_child(
+    {Name, {Job, State, Interval, Count, run}}
+  ),
+  erljob_status:set(Name, sup, Pid),
   ok.
 
-delete_job(Name) ->
-  modify_job(Name, [
-    fun erljob_controller:finish/1,
-    fun erljob_status:delete/1
-  ]).
+delete_job(Name)  -> modify_run_state(Name, finish).
+restart_job(Name) -> modify_run_state(Name, run).
+suspend_job(Name) -> modify_run_state(Name, suspend).
 
-restart_job(Name) ->
-  modify_job(Name, [fun erljob_controller:restart/1]).
-
-suspend_job(Name) ->
-  modify_job(Name, [fun erljob_controller:suspend/1]).
-
-modify_job(Name, Actions) ->
-  modify_jobs(erljob_status:lookup(Name), Actions).
-
-modify_jobs([], _Action) -> ok;
-modify_jobs(
-  [{Pid, _Name, _Job, _Arg, _Interval, _Count, _State} | Jobs],
-  Actions
-) ->
-  lists:foreach(fun (Action) -> Action(Pid) end, Actions),
-  modify_jobs(Jobs, Actions).
-
-%% @equiv erljob_status:lookup()
-dump() -> erljob_status:dump().
-
-%% @equiv erljob_status:lookup(Name)
-lookup(Name) -> erljob_status:lookup(Name).
+modify_run_state(Name, RunState) ->
+  erljob_controller_status:set(
+    erljob_status:lookup(Name, status), run_status, RunState
+  ).
 

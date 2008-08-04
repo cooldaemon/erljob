@@ -20,33 +20,60 @@
 
 -export([start_link/1]).
 -export([init/2]).
--export([restart/1, suspend/1, finish/1]).
 
-start_link(Arg) ->
-  proc_lib:start_link(?MODULE, init, [self(), Arg]).
+-define(SUSPEND_SLEEP_TIME, 1000).
 
-init(Parent, Arg) ->
+start_link({Name, _State}) ->
+  proc_lib:start_link(?MODULE, init, [self(), Name]).
+
+init(Parent, Name) ->
+  StatusPid = erljob_status:ensure_lookup(Name, status),
   proc_lib:init_ack(Parent, {ok, self()}),
-  loop(Arg, run).
+  loop({Name, StatusPid}).
 
-loop({_Job, _JobArg, _Interval, 0}, _State) -> ok;
-loop({_Job, _JobArg, Interval, _State}=Arg, State) ->
+loop({_SupId, StatusPid}=State) ->
+  loop(
+    State,
+    lists:map(fun (Name) ->
+      erljob_controller_status:lookup(StatusPid, Name)
+    end, [job, job_state, interval, count, run_state])
+  ).
+
+loop({SupId, _StatusPid}, [_Job, _JobState, _Interval, 0, _RunState]) ->
+  finish(SupId);
+loop({SupId, _StatusPid}, [_Job, _JobState, _Interval, _Count, finish]) ->
+  finish(SupId);
+loop(State, [_Job, _JobState, _Interval, _Count, suspend]) ->
+  timer:sleep(?SUSPEND_SLEEP_TIME),
+  loop(State);
+loop(State, [_Job, _JobState, Interval, _Count, _RunState]=Status) ->
   receive
-    restart -> loop(Arg, start);
-    suspend -> loop(Arg, suspend);
-    finish  -> ok
+    change_state -> loop(State)
   after Interval ->
-    run_job(Arg, State)
+    run_job(State, Status)
   end.
 
-run_job({{Module, Function}=Job, JobArg, Interval, Count}, run) ->
-  loop({Job, Module:Function(JobArg), Interval, Count - 1}, run);
-run_job({Job, JobArg, Interval, Count}, run) ->
-  loop({Job, Job(JobArg), Interval, Count - 1}, run);
-run_job(Arg, State) ->
-  loop(Arg, State).
+run_job(
+  {_SupId, StatusPid}=State, [Job, JobState, _Interval, Count, run]
+) ->
+  erljob_controller_status:set(
+    StatusPid, job_state, exec_job(Job, JobState)
+  ),
+  decrement_count(StatusPid, Count),
+  loop(State);
+run_job(State, _Status) ->
+  loop(State).
 
-restart(Pid) -> Pid ! restart.
-suspend(Pid) -> Pid ! stop.
-finish(Pid)  -> Pid ! finish.
+exec_job({M, F}, Arg) -> which_arg(catch M:F(Arg), Arg);
+exec_job(Job, Arg)    -> which_arg(catch Job(Arg), Arg).
+which_arg({'EXIT', _Reason}, Arg) -> Arg;
+which_arg(Arg, _OldArg)           -> Arg.
+
+decrement_count(_StatusPid, infinity) -> ok;
+decrement_count(StatusPid, Count) ->
+  erljob_controller_status:set(StatusPid, count, Count - 1).
+
+finish(SupId) ->
+  erljob_cleaner:exit_job(SupId),
+  ok.
 

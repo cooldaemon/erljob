@@ -19,28 +19,25 @@
 -module(erljob_controller_sup).
 -behaviour(supervisor).
 
--export([start_link/0, start_child/4]).
+-export([start_link/1, stop/1]).
 -export([init/1]).
 
--define(SHUTDOWN_WAITING_TIME, 2000).
+%% @equiv sup_utils:start_link(?MODULE, [Arg:term()])
+start_link(Arg) -> supervisor:start_link(?MODULE, [Arg]).
 
-%% @equiv sup_utils:start_link(?MODULE, [])
-start_link() -> sup_utils:start_link(?MODULE, []).
-
-%% @equiv supervisor:start_child(
-%%  ?MODULE, [Job:term(), Arg:term(), Interval:integer(), Count:integer()])
-start_child(Job, Arg, Interval, Count) ->
-  supervisor:start_child(?MODULE, [{Job, Arg, Interval, Count}]).
+%% @equiv exit(Pid:pid(), normal)
+stop(Pid) -> exit(Pid, normal).
 
 %% @doc Callback for supervisor.
-%% @spec init(_Args:[]) -> Spec:term()
-init(_Args) ->
-  sup_utils:spec(simple_one_for_one, [{
-    undefined,
-    {erljob_controller, start_link, []},
-    temporary,
-    ?SHUTDOWN_WAITING_TIME,
-    worker,
-    []
-  }]).
+%% @spec init([Name:string(), Arg:term()]) -> Spec:term()
+init([{Name, _State}=Arg]) ->
+  IdSuffix = binary_to_list(term_to_binary(Name)),
+  sup_utils:spec(one_for_all,
+    lists:map(fun (Module) ->
+      sup_utils:worker_spec(
+        atom_to_list(Module) ++ IdSuffix,
+        transient, Module, [Arg]
+      )
+    end, [erljob_controller_status, erljob_controller])
+  ).
 

@@ -19,9 +19,13 @@
 -module(sup_utils).
 
 -export([start_link/2, stop/1]).
--export([spec/2, worker_spec/2, worker_spec/3, supervisor_spec/2]).
+-export([
+  spec/2,
+  worker_spec/2, worker_spec/3, worker_spec/4, worker_spec/5,
+  sup_spec/2, sup_spec/4
+]).
 
--define(MAX_RESTART, 0).
+-define(MAX_RESTART, 9999999).
 -define(TIME, 1).
 -define(SHUTDOWN_WAITING_TIME, 2000).
 
@@ -61,13 +65,35 @@ worker_spec(Module, Function, Args) ->
     permanent,
     ?SHUTDOWN_WAITING_TIME,
     worker,
-    [Module]
+    []
+  }.
+
+worker_spec(Id, RestartStrategy, Module, Args) ->
+  worker_spec(Id, RestartStrategy, Module, start_link, Args).
+
+worker_spec(Id, RestartStrategy, Module, Function, Args) ->
+  {
+    Id,
+    {Module, Function, Args},
+    RestartStrategy,
+    ?SHUTDOWN_WAITING_TIME,
+    worker,
+    []
   }.
 
 %% @doc Return the supervisor spec for Module.
 %% @spec worker_spec(Module:atom(), Args:[term()]) ->
 %%  SupervisorSpec:term()
-supervisor_spec(Module, Args) ->
-  StartFunc = {Module, start_link, Args},
-  {Module, StartFunc, permanent, infinity, supervisor, []}.
+sup_spec(Module, Args) ->
+  sup_spec(Module, Module, Args, []).
+
+sup_spec(Id, Module, Args, Modules) ->
+  {
+    Id,
+    {Module, start_link, Args},
+    permanent,
+    infinity,
+    supervisor,
+    Modules
+  }.
 

@@ -1,6 +1,6 @@
 %% @author Masahito Ikuta <cooldaemon@gmail.com> [http://d.hatena.ne.jp/cooldaemon/]
 %% @copyright Masahito Ikuta 2008
-%% @doc A supervisor for the erljob.
+%% @doc A supervisor for the erljob_controller_sup.
 
 %% Copyright 2008 Masahito Ikuta
 %%
@@ -16,24 +16,29 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(erljob_sup).
+-module(erljob_controller_sup_sup).
 -behaviour(supervisor).
 
--export([start_link/0, stop/0]).
+-export([start_link/0, start_child/1, stop_child/1]).
 -export([init/1]).
 
 %% @equiv sup_utils:start_link(?MODULE, [])
 start_link() -> sup_utils:start_link(?MODULE, []).
 
-%% @equiv sup_utils:stop(?MODULE)
-stop() -> sup_utils:stop(?MODULE).
+%% @equiv supervisor:start_child(
+%%  ?MODULE, [Arg:term()])
+start_child({Name, _State}=Arg) ->
+  supervisor:start_child(
+    ?MODULE,
+    sup_utils:sup_spec(Name, erljob_controller_sup, [Arg], dynamic) 
+  ).
+
+stop_child(Name) ->
+  supervisor:terminate_child(?MODULE, Name),
+  supervisor:delete_child(?MODULE, Name).
 
 %% @doc Callback for supervisor.
 %% @spec init(_Args:[]) -> Spec:term()
 init(_Args) ->
-  sup_utils:spec(one_for_one, [
-    sup_utils:worker_spec(erljob_status, []),
-    sup_utils:worker_spec(erljob_cleaner, []),
-    sup_utils:sup_spec(erljob_controller_sup_sup, [])
-  ]).
+  sup_utils:spec(one_for_one, []).
 
