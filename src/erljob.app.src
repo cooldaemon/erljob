@@ -3,11 +3,12 @@
   {vsn, "%VSN%"},
   {modules, [
     erljob, erljob_app, erljob_sup,
-    erljob_status,
-    erljob_controller_sup, erljob_controller
+    erljob_status, erljob_cleaner, erljob_controller_sup_sup,
+    erljob_controller_sup, erljob_controller_status, erljob_controller
   ]},
   {registered, [
-    erljob_sup, erljob_status, erljob_controller_sup
+    erljob_sup,
+    erljob_status, erljob_cleaner, erljob_controller_sup_sup
   ]},
   {applications, [kernel, stdlib]},
   {mod, {erljob_app, []}},

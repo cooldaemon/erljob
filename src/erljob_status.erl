@@ -29,11 +29,9 @@
 
 -define(ENSURE_LOOKUP_SLEEP_TIME, 100).
 
-%% @equiv gen_server:start_link({local, ?MODULE}, ?MODULE, [], [])
 start_link() ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-%% @equiv gen_server:call(?MODULE, stop)
 stop() ->
   gen_server:call(?MODULE, stop).
 
@@ -58,7 +56,6 @@ ensure_lookup(Name, Key) ->
       Value
   end.
 
-%% @spec init(_Args:[]) -> {ok, []}
 init(_Args) ->
   process_flag(trap_exit, true),
   {ok, {ets:new(erljob_status, [bag, private])}}.
@@ -69,14 +66,9 @@ handle_call({lookup, Name, Key}, _From, {Ets}) ->
 handle_call({create, Name}, _From, {Ets}) ->
   create_reply(ets:lookup(Ets, Name), Name, {Ets});
 
-%% @doc stop server.
-%% @spec handle_call(stop, _From:from(), State:term()) ->
-%%  {stop, normal, stopped, State:term()}
 handle_call(stop, _From, State) ->
   {stop, normal, stopped, State};
 
-%% @spec handle_call(_Message:term(), _From:from(), State:term()) ->
-%%  {reply, ok, State:term()}.
 handle_call(_Message, _From, State) ->
   {reply, ok, State}.
 
@@ -90,21 +82,15 @@ handle_cast({set, Name, Key, Value}, {Ets}) ->
   set(Lookup, Key, Value, {Ets}),
   {noreply, {Ets}};
 
-%% @spec handle_cast(_Message:term(), _State:term()) ->
-%%  {noreply, State:term()}
 handle_cast(_Message, State) ->
   {noreply, State}.
 
-%% @spec handle_cast(_Info:term(), _State:term()) ->
-%%  {noreply, State:term()}
 handle_info(_Info, State) ->
   {noreply, State}.
 
-%% @spec terminate(_Reason:term(), _State:term()) -> ok
 terminate(_Reason, _State) ->
   ok.
 
-%% @spec code_change(_Reason:term(), _State:term()) -> ok
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 

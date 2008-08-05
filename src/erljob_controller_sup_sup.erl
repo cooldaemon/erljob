@@ -22,11 +22,8 @@
 -export([start_link/0, start_child/1, stop_child/1]).
 -export([init/1]).
 
-%% @equiv sup_utils:start_link(?MODULE, [])
 start_link() -> sup_utils:start_link(?MODULE, []).
 
-%% @equiv supervisor:start_child(
-%%  ?MODULE, [Arg:term()])
 start_child({Name, _State}=Arg) ->
   supervisor:start_child(
     ?MODULE,
@@ -37,8 +34,6 @@ stop_child(Name) ->
   supervisor:terminate_child(?MODULE, Name),
   supervisor:delete_child(?MODULE, Name).
 
-%% @doc Callback for supervisor.
-%% @spec init(_Args:[]) -> Spec:term()
 init(_Args) ->
   sup_utils:spec(one_for_one, []).
 

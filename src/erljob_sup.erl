@@ -22,14 +22,10 @@
 -export([start_link/0, stop/0]).
 -export([init/1]).
 
-%% @equiv sup_utils:start_link(?MODULE, [])
 start_link() -> sup_utils:start_link(?MODULE, []).
 
-%% @equiv sup_utils:stop(?MODULE)
 stop() -> sup_utils:stop(?MODULE).
 
-%% @doc Callback for supervisor.
-%% @spec init(_Args:[]) -> Spec:term()
 init(_Args) ->
   sup_utils:spec(one_for_one, [
     sup_utils:worker_spec(erljob_status, []),

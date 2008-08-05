@@ -21,10 +21,6 @@
 
 -export([start/2, stop/1]). 
 
-%% @equiv erljob_sup:start_link()
 start(_Type, _Args) -> erljob_sup:start_link().
-
-%% @doc Stop this application.
-%% @spec stop(_State::term()) -> ok
 stop(_State) -> ok.
 

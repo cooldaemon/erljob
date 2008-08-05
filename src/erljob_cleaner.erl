@@ -27,30 +27,22 @@
   terminate/2, code_change/3
 ]).
 
-%% @equiv gen_server:start_link({local, ?MODULE}, ?MODULE, [], [])
 start_link() ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-%% @equiv gen_server:call(?MODULE, stop)
 stop() ->
   gen_server:call(?MODULE, stop).
 
 exit_job(Name) ->
   gen_server:cast(?MODULE, {exit_job, Name}).
 
-%% @spec init(_Args:[]) -> {ok, []}
 init(_Args) ->
   process_flag(trap_exit, true),
   {ok, {}}.
 
-%% @doc stop server.
-%% @spec handle_call(stop, _From:from(), State:term()) ->
-%%  {stop, normal, stopped, State:term()}
 handle_call(stop, _From, State) ->
   {stop, normal, stopped, State};
 
-%% @spec handle_call(_Message:term(), _From:from(), State:term()) ->
-%%  {reply, ok, State:term()}.
 handle_call(_Message, _From, State) ->
   {reply, ok, State}.
 
@@ -59,21 +51,15 @@ handle_cast({exit_job, Name}, State) ->
   erljob_controller_sup_sup:stop_child(Name),
   {noreply, State};
 
-%% @spec handle_cast(_Message:term(), _State:term()) ->
-%%  {noreply, State:term()}
 handle_cast(_Message, State) ->
   {noreply, State}.
 
-%% @spec handle_cast(_Info:term(), _State:term()) ->
-%%  {noreply, State:term()}
 handle_info(_Info, State) ->
   {noreply, State}.
 
-%% @spec terminate(_Reason:term(), _State:term()) -> ok
 terminate(_Reason, _State) ->
   ok.
 
-%% @spec code_change(_Reason:term(), _State:term()) -> ok
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 

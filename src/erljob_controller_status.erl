@@ -27,13 +27,11 @@
   terminate/2, code_change/3
 ]).
 
-%% @equiv gen_server:start_link(?MODULE, [Arg:term()], [])
 start_link({Name, Arg}) ->
   {ok, Pid} = gen_server:start_link(?MODULE, [Arg], []),
   erljob_status:set(Name, status, Pid),
   {ok, Pid}.
 
-%% @equiv gen_server:call(Pid, stop)
 stop(Pid) ->
   gen_server:call(Pid, stop).
 
@@ -43,7 +41,6 @@ lookup(Pid, Name) ->
 set(Pid, Name, Value) ->
   gen_server:cast(Pid, {set, {Name, Value}}).
 
-%% @spec init([Arg:term()]) -> {ok, Arg:term()}
 init([{Job, JobState, Interval, Count, RunState}]) ->
   process_flag(trap_exit, true),
   {ok, {Job, JobState, Interval, Count, RunState, undefined}}.
@@ -64,14 +61,9 @@ handle_call(
   end,
   {reply, Result, State};
 
-%% @doc stop server.
-%% @spec handle_call(stop, _From:from(), State:term()) ->
-%%  {stop, normal, stopped, State:term()}
 handle_call(stop, _From, State) ->
   {stop, normal, stopped, State};
 
-%% @spec handle_call(_Message:term(), _From:from(), State:term()) ->
-%%  {reply, ok, State:term()}.
 handle_call(_Message, _From, State) ->
   {reply, ok, State}.
 
@@ -100,24 +92,18 @@ handle_cast(
   end,
   {noreply, NewState};
 
-%% @spec handle_cast(_Message:term(), _State:term()) ->
-%%  {noreply, State:term()}
 handle_cast(_Message, State) ->
   {noreply, State}.
 
 send_change_state(undefined) -> ok;
 send_change_state(Pid)  -> Pid ! change_state.
 
-%% @spec handle_cast(_Info:term(), _State:term()) ->
-%%  {noreply, State:term()}
 handle_info(_Info, State) ->
   {noreply, State}.
 
-%% @spec terminate(_Reason:term(), _State:term()) -> ok
 terminate(_Reason, _State) ->
   ok.
 
-%% @spec code_change(_Reason:term(), _State:term()) -> ok
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 

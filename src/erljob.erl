@@ -26,7 +26,13 @@
 -module(erljob).
 
 -export([start/0, stop/0]). 
--export([add_job/5, delete_job/1, restart_job/1, suspend_job/1]). 
+-export([
+  add_job/5,
+  delete_job/1, restart_job/1, suspend_job/1,
+  set_job/2, set_state/2, set_interval/2, set_count/2,
+  lookup_run_state/1,
+  lookup_job/1, lookup_state/1, lookup_interval/1, lookup_count/1
+]). 
 
 %% @equiv application:start(erljob, permanent)
 start() ->
@@ -35,6 +41,17 @@ start() ->
 %% @equiv application:stop(erljob)
 stop() -> application:stop(erljob).
 
+%% @type job() = function() | {M::atom(), F::atom()}.
+
+%% @doc add a job.
+%% @spec 
+%%   add_job(
+%%     Name::term(),
+%%     Job::job(),
+%%     State::term(),
+%%     Interval::integer(),
+%%     Count::integer() | infinity
+%%   ) -> ok | exist
 add_job(Name, Job, State, Interval, Count) ->
   add_job(erljob_status:create(Name), Name, Job, State, Interval, Count).
 
@@ -46,12 +63,62 @@ add_job(ok, Name, Job, State, Interval, Count) ->
   erljob_status:set(Name, sup, Pid),
   ok.
 
-delete_job(Name)  -> modify_run_state(Name, finish).
-restart_job(Name) -> modify_run_state(Name, run).
-suspend_job(Name) -> modify_run_state(Name, suspend).
+%% @doc delete a job.
+%% @spec delete_job(Name::term()) -> ok
+delete_job(Name) -> modify_status(Name, run_state, finish).
 
-modify_run_state(Name, RunState) ->
+%% @doc restart a job.
+%% @spec restart_job(Name::term()) -> ok
+restart_job(Name) -> modify_status(Name, run_state, run).
+
+%% @doc suspend a job.
+%% @spec suspend_job(Name::term()) -> ok
+suspend_job(Name) -> modify_status(Name, run_status, suspend).
+
+%% @doc set a job.
+%% @spec set_job(Name::term(), Job::job()) -> ok
+set_job(Name, Job) -> modify_status(Name, job, Job).
+
+%% @doc set a job state.
+%% @spec set_state(Name::term(), State::term()) -> ok
+set_state(Name, State) -> modify_status(Name, job_state, State).
+
+%% @doc set a interval time.
+%% @spec set_interval(Name::term(), Interval::integer()) -> ok
+set_interval(Name, Interval) -> modify_status(Name, interval, Interval).
+
+%% @doc set a run count.
+%% @spec set_count(Name::term(), Count::integer()) -> ok
+set_count(Name, Count) -> modify_status(Name, count, Count).
+
+modify_status(Name, Key, Value) ->
   erljob_controller_status:set(
-    erljob_status:lookup(Name, status), run_status, RunState
+    erljob_status:lookup(Name, status), Key, Value
+  ),
+  ok.
+
+%% @doc lookup a run state.
+%% @spec lookup_run_state(Name::term()) -> run | suspend | finish
+lookup_run_state(Name) -> lookup_status(Name, run_state).
+
+%% @doc lookup a job.
+%% @spec lookup_job(Name::term()) -> job()
+lookup_job(Name) -> lookup_status(Name, job).
+
+%% @doc lookup a job state.
+%% @spec lookup_state(Name::term()) -> term()
+lookup_state(Name) -> lookup_status(Name, job_state).
+
+%% @doc lookup a interval time.
+%% @spec lookup_interval(Name::term()) -> integer()
+lookup_interval(Name) -> lookup_status(Name, interval).
+
+%% @doc lookup a run count.
+%% @spec lookup_count(Name::term()) -> integer()
+lookup_count(Name) -> lookup_status(Name, count).
+
+lookup_status(Name, Key) ->
+  erljob_controller_status:lookup(
+    erljob_status:lookup(Name, status), Key
   ).
 

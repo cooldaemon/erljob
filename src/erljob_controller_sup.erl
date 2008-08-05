@@ -22,14 +22,10 @@
 -export([start_link/1, stop/1]).
 -export([init/1]).
 
-%% @equiv sup_utils:start_link(?MODULE, [Arg:term()])
 start_link(Arg) -> supervisor:start_link(?MODULE, [Arg]).
 
-%% @equiv exit(Pid:pid(), normal)
 stop(Pid) -> exit(Pid, normal).
 
-%% @doc Callback for supervisor.
-%% @spec init([Name:string(), Arg:term()]) -> Spec:term()
 init([{Name, _State}=Arg]) ->
   IdSuffix = binary_to_list(term_to_binary(Name)),
   sup_utils:spec(one_for_all,

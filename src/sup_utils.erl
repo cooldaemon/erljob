@@ -29,13 +29,9 @@
 -define(TIME, 1).
 -define(SHUTDOWN_WAITING_TIME, 2000).
 
-%% @equiv supervisor:start_link(
-%%  {local, Name:atom()}, Name:atom(), Args:[term()])
 start_link(Name, Args) ->
   supervisor:start_link({local, Name}, Name, Args).
 
-%% @doc Stop the supervisor for Name.
-%% @spec stop(Name:atom()) -> ok | not_started
 stop(Name) ->
   case whereis(Name) of
     Pid when is_pid(Pid) ->
@@ -45,19 +41,12 @@ stop(Name) ->
       not_started
   end.
 
-%% @doc Return the spec for a supervisor.
-%% @spec spec(RestartStrategy:atom(), ChildSpecs:[term()]) ->
-%%  {ok, {Option:term(), ChildSpecs:[term()]}}
 spec(RestartStrategy, ChildSpecs) ->
   {ok, {{RestartStrategy, ?MAX_RESTART, ?TIME}, ChildSpecs}}.
 
-%% @equiv worker_spec(Module:atom(), start_link, Args:[term()])
 worker_spec(Module, Args) ->
   worker_spec(Module, start_link, Args).
 
-%% @doc Return the worker spec for Module.
-%% @spec worker_spec(Module:atom(), Function:atom(), Args:[term()]) ->
-%%  WorkerSpec:term()
 worker_spec(Module, Function, Args) ->
   {
     Module,
@@ -81,9 +70,6 @@ worker_spec(Id, RestartStrategy, Module, Function, Args) ->
     []
   }.
 
-%% @doc Return the supervisor spec for Module.
-%% @spec worker_spec(Module:atom(), Args:[term()]) ->
-%%  SupervisorSpec:term()
 sup_spec(Module, Args) ->
   sup_spec(Module, Module, Args, []).
 
