@@ -46,7 +46,7 @@ set(Pid, Name, Value) ->
 %% @spec init([Arg:term()]) -> {ok, Arg:term()}
 init([{Job, JobState, Interval, Count, RunState}]) ->
   process_flag(trap_exit, true),
-  {ok, {Job, JobState, Interval, Count, RunState, null}}.
+  {ok, {Job, JobState, Interval, Count, RunState, undefined}}.
 
 handle_call(
   {lookup, Name},
@@ -94,7 +94,7 @@ handle_cast(
       send_change_state(Pid),
       {Job, JobState, Interval, Count, Value, Pid};
     controller_pid ->
-      {Job, JobState, Interval, Count, RunState, Pid};
+      {Job, JobState, Interval, Count, RunState, Value};
     _Other ->
       State
   end,
@@ -105,7 +105,7 @@ handle_cast(
 handle_cast(_Message, State) ->
   {noreply, State}.
 
-send_change_state(null) -> ok;
+send_change_state(undefined) -> ok;
 send_change_state(Pid)  -> Pid ! change_state.
 
 %% @spec handle_cast(_Info:term(), _State:term()) ->
