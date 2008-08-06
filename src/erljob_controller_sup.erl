@@ -19,21 +19,20 @@
 -module(erljob_controller_sup).
 -behaviour(supervisor).
 
--export([start_link/1, stop/1]).
+-export([start_link/1]).
 -export([init/1]).
 
 start_link(Arg) -> supervisor:start_link(?MODULE, [Arg]).
 
-stop(Pid) -> exit(Pid, normal).
-
 init([{Name, _State}=Arg]) ->
   IdSuffix = binary_to_list(term_to_binary(Name)),
-  sup_utils:spec(one_for_all,
+  sup_utils:spec(
     lists:map(fun (Module) ->
-      sup_utils:worker_spec(
+      {
+        worker,
         atom_to_list(Module) ++ IdSuffix,
         transient, Module, [Arg]
-      )
+      }
     end, [erljob_controller_status, erljob_controller])
   ).
 

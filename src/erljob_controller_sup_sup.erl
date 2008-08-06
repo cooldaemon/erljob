@@ -22,7 +22,7 @@
 -export([start_link/0, start_child/1, stop_child/1]).
 -export([init/1]).
 
-start_link() -> sup_utils:start_link(?MODULE, []).
+start_link() -> sup_utils:start_link(?MODULE).
 
 start_child({Name, _State}=Arg) ->
   supervisor:start_child(
@@ -35,5 +35,5 @@ stop_child(Name) ->
   supervisor:delete_child(?MODULE, Name).
 
 init(_Args) ->
-  sup_utils:spec(one_for_one, []).
+  sup_utils:spec().
 
