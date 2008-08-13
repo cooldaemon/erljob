@@ -28,7 +28,7 @@
 -export([start/0, stop/0]). 
 -export([
   add_job/5,
-  delete_job/1, restart_job/1, suspend_job/1,
+  delete_job/1, resume_job/1, suspend_job/1,
   set_job/2, set_state/2, set_interval/2, set_count/2,
   lookup_run_state/1,
   lookup_job/1, lookup_state/1, lookup_interval/1, lookup_count/1
@@ -67,9 +67,9 @@ add_job(ok, Name, Job, State, Interval, Count) ->
 %% @spec delete_job(Name::term()) -> ok
 delete_job(Name) -> modify_status(Name, run_state, finish).
 
-%% @doc restart a job.
-%% @spec restart_job(Name::term()) -> ok
-restart_job(Name) -> modify_status(Name, run_state, run).
+%% @doc resume a job.
+%% @spec resume_job(Name::term()) -> ok
+resume_job(Name) -> modify_status(Name, run_state, run).
 
 %% @doc suspend a job.
 %% @spec suspend_job(Name::term()) -> ok
