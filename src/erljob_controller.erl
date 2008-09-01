@@ -29,6 +29,7 @@ start_link({Name, _State}) ->
 init(Parent, Name) ->
   StatusPid = erljob_status:ensure_lookup(Name, status),
   proc_lib:init_ack(Parent, {ok, self()}),
+  erljob_controller_status:set(StatusPid, controller_pid, self()),
   loop({Name, StatusPid}).
 
 loop({_SupId, StatusPid}=State) ->
