@@ -1,4 +1,4 @@
-## tcp_server
+## Erljob
 the Erljob is a job scheduler in Erlang.
 
 Here's a quick example illustrating how to use erljob:
