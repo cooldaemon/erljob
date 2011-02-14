@@ -1,0 +1,6 @@
+ebin
+logs
+doc
+deps
+erl_crash.dump
+*.beam

@@ -1,17 +1,8 @@
-{application, erljob, [
-  {description, "erljob - Job Scheduler."},
-  {vsn, "%VSN%"},
-  {modules, [
-    erljob, erljob_app, erljob_sup,
-    erljob_status, erljob_cleaner, erljob_controller_sup_sup,
-    erljob_controller_sup, erljob_controller_status, erljob_controller
-  ]},
-  {registered, [
-    erljob_sup,
-    erljob_status, erljob_cleaner, erljob_controller_sup_sup
-  ]},
-  {applications, [kernel, stdlib]},
+{application, erljob,
+ [{description, "Job Scheduler in Erlang."},
+  {vsn, "0.0.2"},
+  {modules, []},
+  {registered, []},
   {mod, {erljob_app, []}},
-  {start_phases, []},
-  {env, []}
-]}.
+  {env, []},
+  {applications, [kernel, stdlib, sasl]}]}.
