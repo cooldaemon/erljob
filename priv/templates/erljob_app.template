@@ -1,0 +1,23 @@
+{variables, [
+  {appid, "erljob_app"},
+  {dest,  "{{appid}}"}
+]}.
+
+{dir, "{{dest}}"}.
+
+{template, "erljob_app_skel/src/erljob_app.app.src", "{{dest}}/src/{{appid}}.app.src"}.
+{template, "erljob_app_skel/src/erljob_app_app.erl", "{{dest}}/src/{{appid}}_app.erl"}.
+{template, "erljob_app_skel/src/erljob_app_sup.erl", "{{dest}}/src/{{appid}}_sup.erl"}.
+{template, "erljob_app_skel/src/erljob_app_store.erl", "{{dest}}/src/{{appid}}_store.erl"}.
+{template, "erljob_app_skel/src/erljob_app.erl", "{{dest}}/src/{{appid}}.erl"}.
+
+{template, "erljob_app_skel/test/erljob_app_SUITE.erl", "{{dest}}/test/{{appid}}_SUITE.erl"}.
+{template, "erljob_app_skel/test/erljob_app.cover.spec", "{{dest}}/test/{{appid}}.cover.spec"}.
+
+{file, "../../.gitignore", "{{dest}}/.gitignore"}.
+{file, "../../test/.gitignore", "{{dest}}/test/.gitignore"}.
+{file, "erljob_app_skel/rebar.config", "{{dest}}/rebar.config"}.
+{file, "../../rebar", "{{dest}}/rebar"}.
+{file, "erljob_app_skel/Makefile", "{{dest}}/Makefile"}.
+
+{chmod, 8#755, "{{dest}}/rebar"}.

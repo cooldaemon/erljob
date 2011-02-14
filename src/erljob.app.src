@@ -5,4 +5,4 @@
   {registered, []},
   {mod, {erljob_app, []}},
   {env, []},
-  {applications, [kernel, stdlib, sasl]}]}.
+  {applications, [kernel, stdlib]}]}.
